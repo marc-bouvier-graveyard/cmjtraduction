@@ -3,7 +3,7 @@
  * Plugin Name: Divi Builder
  * Plugin URI: http://elegantthemes.com
  * Description: A drag and drop page builder for any WordPress theme.
- * Version: 1.2.1
+ * Version: 1.2.4.2
  * Author: Elegant Themes
  * Author URI: http://elegantthemes.com
  * License: GPLv2 or later
@@ -21,7 +21,7 @@ if ( ! class_exists( 'ET_Dashboard_v2' ) ) {
 }
 
 class ET_Builder_Plugin extends ET_Dashboard_v2 {
-	var $plugin_version = '1.1.3';
+	var $plugin_version = '1.2.4.2';
 	var $_options_pagename = 'et_builder_options';
 	var $menu_page;
 	private static $_this;
@@ -29,7 +29,7 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 	function __construct() {
 		// Don't allow more than one instance of the class
 		if ( isset( self::$_this ) ) {
-			wp_die( sprintf( __( '%s is a singleton class and you cannot create a second instance.', 'et_builder' ),
+			wp_die( sprintf( esc_html__( '%s is a singleton class and you cannot create a second instance.', 'et_builder' ),
 				get_class( $this ) )
 			);
 		}
@@ -75,16 +75,11 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 			// get_the_excerpt() for excerpt retrieval causes infinite loop; thus we're using excerpt from global $post variable
 			global $post;
 
-			$read_more_title = sprintf(
-				__( 'Read more on %1%s', 'et_builder' ),
-				get_the_title()
-			);
-
 			$read_more = sprintf(
 				' <a href="%1$s" title="%2$s" class="more-link">%3$s</a>',
 				esc_url( get_permalink() ),
-				esc_attr( __( $read_more_title ) ),
-				esc_html( __( 'read more', 'et_builder' ) )
+				sprintf( esc_attr__( 'Read more on %1%s', 'et_builder' ), esc_html( get_the_title() ) ),
+				esc_html__( 'read more', 'et_builder' )
 			);
 
 			// Use post excerpt if there's any. If there is no excerpt defined,
@@ -136,7 +131,7 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 		$dashboard_args = array(
 			'et_dashboard_options_pagename'  => $this->_options_pagename,
 			'et_dashboard_plugin_name'       => 'pb_builder',
-			'et_dashboard_save_button_text'  => __( 'Save', 'et_builder' ),
+			'et_dashboard_save_button_text'  => esc_html__( 'Save', 'et_builder' ),
 			'et_dashboard_options_path'      => ET_BUILDER_PLUGIN_DIR . '/dashboard/includes/options.php',
 			'et_dashboard_options_page'      => 'toplevel_page',
 			'et_dashboard_options_pagename'  => 'et_divi_options',
@@ -161,7 +156,7 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 	function options_page() {
 		// display wp error screen if plugin options disabled for current user
 		if ( ! et_pb_is_allowed( 'theme_options' ) ) {
-			wp_die( __( "You don't have sufficient permissions to access this page", 'et_builder_plugin' ) );
+			wp_die( esc_html__( "You don't have sufficient permissions to access this page", 'et_builder_plugin' ) );
 		}
 
 		printf(
@@ -181,7 +176,7 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 	function et_plugin_setup_builder() {
 		define( 'ET_BUILDER_PLUGIN_ACTIVE', true );
 
-		define( 'ET_BUILDER_VERSION', '1.1.3' );
+		define( 'ET_BUILDER_VERSION', '1.2.3' );
 
 		define( 'ET_BUILDER_DIR', ET_BUILDER_PLUGIN_DIR . 'framework/' );
 		define( 'ET_BUILDER_URI', trailingslashit( plugins_url( '', __FILE__ ) ) . 'framework' );
@@ -205,13 +200,13 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 
 		// Add Theme Options menu only if it's enabled for current user
 		if ( et_pb_is_allowed( 'theme_options' ) ) {
-			add_submenu_page( 'et_divi_options', __( 'Plugin Options', 'et_builder_plugin' ), __( 'Plugin Options', 'et_builder_plugin' ), 'manage_options', 'et_divi_options', array( $this, 'options_page' ) );
+			add_submenu_page( 'et_divi_options', esc_html__( 'Plugin Options', 'et_builder_plugin' ), esc_html__( 'Plugin Options', 'et_builder_plugin' ), 'manage_options', 'et_divi_options', array( $this, 'options_page' ) );
 		}
 		// Add Divi Library menu only if it's enabled for current user
 		if ( et_pb_is_allowed( 'divi_library' ) ) {
-			add_submenu_page( 'et_divi_options', __( 'Divi Library', 'et_builder' ), __( 'Divi Library', 'et_builder' ), 'manage_options', 'edit.php?post_type=et_pb_layout' );
+			add_submenu_page( 'et_divi_options', esc_html__( 'Divi Library', 'et_builder' ), esc_html__( 'Divi Library', 'et_builder' ), 'manage_options', 'edit.php?post_type=et_pb_layout' );
 		}
-		add_submenu_page( 'et_divi_options', __( 'Divi Role Editor', 'et_builder' ), __( 'Divi Role Editor', 'et_builder' ), 'manage_options', 'et_divi_role_editor', 'et_pb_display_role_editor' );
+		add_submenu_page( 'et_divi_options', esc_html__( 'Divi Role Editor', 'et_builder' ), esc_html__( 'Divi Role Editor', 'et_builder' ), 'manage_options', 'et_divi_role_editor', 'et_pb_display_role_editor' );
 	}
 
 	/**
@@ -238,29 +233,42 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 		wp_localize_script( 'et-builder-js', 'builder_settings', array(
 			'et_builder_nonce'           => wp_create_nonce( 'et_builder_nonce' ),
 			'ajaxurl'                    => admin_url( 'admin-ajax.php', $this->protocol ),
-			'authorize_text'             => __( 'Authorize', 'et_builder_plugin' ),
-			'reauthorize_text'           => __( 'Re-Authorize', 'et_builder_plugin' ),
-			'authorization_successflull' => __( 'AWeber successfully authorized', 'et_builder_plugin' ),
+			'authorize_text'             => esc_html__( 'Authorize', 'et_builder_plugin' ),
+			'reauthorize_text'           => esc_html__( 'Re-Authorize', 'et_builder_plugin' ),
+			'authorization_successflull' => esc_html__( 'AWeber successfully authorized', 'et_builder_plugin' ),
 			'save_settings'              => wp_create_nonce( 'save_settings' ),
 		) );
 	}
 
 	function authorize_aweber() {
-		wp_verify_nonce( $_POST['et_builder_nonce'] , 'et_builder_nonce' );
+		if ( ! wp_verify_nonce( $_POST['et_builder_nonce'] , 'et_builder_nonce' ) ) {
+			die( -1 );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
+		}
 
 		$api_key = ! empty( $_POST['et_builder_api_key'] ) ? sanitize_text_field( $_POST['et_builder_api_key'] ) : '';
 
-		$error_message = '' !== $api_key ? $this->aweber_authorization( $api_key ) : __( 'please paste valid authorization code', 'et_builder_plugin' );
+		$error_message = '' !== $api_key ? $this->aweber_authorization( $api_key ) : esc_html__( 'please paste valid authorization code', 'et_builder_plugin' );
 
 		$result = 'success' == $error_message ?
 			$error_message
-			: __( 'Authorization failed: ', 'et_builder_plugin' ) . $error_message;
+			: esc_html__( 'Authorization failed: ', 'et_builder_plugin' ) . $error_message;
 
 		die( $result );
 	}
 
 	function refresh_lists() {
-		wp_verify_nonce( $_POST['et_builder_nonce'] , 'et_builder_nonce' );
+		if ( ! wp_verify_nonce( $_POST['et_builder_nonce'] , 'et_builder_nonce' ) ) {
+			die( -1 );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
+		}
+
 		$service = ! empty( $_POST['et_builder_mail_service'] ) ? sanitize_text_field( $_POST['et_builder_mail_service'] ) : '';
 		self::process_and_update_options( $_POST['et_builder_form_options'] );
 
@@ -274,9 +282,9 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 		}
 
 		if ( false === $result ) {
-			$result = sprintf( __( 'Error: Please make sure %1$s', 'et_builder_plugin' ), 'mailchimp' === $service ? __( 'MailChimp API key is correct', 'et_builder_plugin' ) : __( 'AWeber is authorized', 'et_builder_plugin' ) );
+			$result = sprintf( esc_html__( 'Error: Please make sure %1$s', 'et_builder_plugin' ), 'mailchimp' === $service ? esc_html__( 'MailChimp API key is correct', 'et_builder_plugin' ) : esc_html__( 'AWeber is authorized', 'et_builder_plugin' ) );
 		} else {
-			$result = __( 'Lists have been successfully regenerated', 'et_builder_plugin' );
+			$result = esc_html__( 'Lists have been successfully regenerated', 'et_builder_plugin' );
 		}
 
 		die( $result );
@@ -296,17 +304,17 @@ class ET_Builder_Plugin extends ET_Dashboard_v2 {
 			$auth = AWeberAPI::getDataFromAweberID( $api_key );
 
 			if ( ! ( is_array( $auth ) && 4 === count( $auth ) ) ) {
-				$error_message = __( 'Authorization code is invalid. Try regenerating it and paste in the new code.', 'et_builder_plugin' );
+				$error_message = esc_html__( 'Authorization code is invalid. Try regenerating it and paste in the new code.', 'et_builder_plugin' );
 			} else {
 				$error_message = 'success';
 				list( $consumer_key, $consumer_secret, $access_key, $access_secret ) = $auth;
 
 				self::update_option( array(
-					'newsletter_main_aweber_key' => $api_key,
-					'aweber_consumer_key'        => $consumer_key,
-					'aweber_consumer_secret'     => $consumer_secret,
-					'aweber_access_key'          => $access_key,
-					'aweber_access_secret'       => $access_secret,
+					'newsletter_main_aweber_key' => sanitize_text_field( $api_key ),
+					'aweber_consumer_key'        => sanitize_text_field( $consumer_key ),
+					'aweber_consumer_secret'     => sanitize_text_field( $consumer_secret ),
+					'aweber_access_key'          => sanitize_text_field( $access_key ),
+					'aweber_access_secret'       => sanitize_text_field( $access_secret ),
 				) );
 			}
 		} catch ( AWeberAPIException $exc ) {

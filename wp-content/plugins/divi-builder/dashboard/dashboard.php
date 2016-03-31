@@ -34,7 +34,7 @@ class ET_Dashboard_v2 {
 		//define filterable variables
 		$this->_options_pagename = isset( $args['et_dashboard_options_pagename'] ) ? $args['et_dashboard_options_pagename'] : 'et_dashboard';
 		$this->plugin_class_name = isset( $args['et_dashboard_plugin_class_name'] ) ? $args['et_dashboard_plugin_class_name'] : '';
-		$this->save_button_text = isset( $args['et_dashboard_save_button_text'] ) ? $args['et_dashboard_save_button_text'] : __( 'Save Changes', 'et_dashboard' );
+		$this->save_button_text = isset( $args['et_dashboard_save_button_text'] ) ? $args['et_dashboard_save_button_text'] : esc_html__( 'Save Changes', 'et_dashboard' );
 		$this->plugin_name = isset( $args['et_dashboard_plugin_name'] ) ? $args['et_dashboard_plugin_name'] : 'et_dashboard';
 		$this->options_path = isset( $args['et_dashboard_options_path'] ) ? $args['et_dashboard_options_path'] : ET_DASHBOARD_DIR_V2 . 'includes/options.php';
 		$this->top_level_page = isset( $args['et_dashboard_options_page'] ) ? $args['et_dashboard_options_page'] : 'tools';
@@ -236,7 +236,13 @@ class ET_Dashboard_v2 {
 		$ajax_request = isset( $_POST[ 'message' ] ) ? true : false;
 
 		if ( true === $ajax_request ){
-			wp_verify_nonce( $_POST['generate_warning_nonce'] , 'generate_warning' );
+			if ( ! wp_verify_nonce( $_POST['generate_warning_nonce'] , 'generate_warning' ) ) {
+				die( -1 );
+			}
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
 		}
 
 		$message = isset( $_POST[ 'message' ] ) ? stripslashes( $_POST[ 'message' ] ) : sanitize_text_field( $message );
@@ -287,7 +293,14 @@ class ET_Dashboard_v2 {
 	 * @return string
 	 */
 	function dashboard_save_settings( $options = array() ) {
-		wp_verify_nonce( $_POST['save_settings_nonce'], 'save_settings' );
+		if ( ! wp_verify_nonce( $_POST['save_settings_nonce'], 'save_settings' ) ) {
+			die( -1 );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
+		}
+
 		$options = $_POST['options'];
 		$option_sub_title = isset( $_POST['options_sub_title'] ) ? $_POST['options_sub_title'] : '';
 		$error_message = $this->process_and_update_options( $options, $option_sub_title );
@@ -336,7 +349,13 @@ class ET_Dashboard_v2 {
 	 * @return string
 	 */
 	function execute_live_search() {
-		wp_verify_nonce( $_POST['dashboard_search'] , 'search_nonce' );
+		if ( ! wp_verify_nonce( $_POST['dashboard_search'] , 'search_nonce' ) ) {
+			die( -1 );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
+		}
 
 		$search_string = ! empty( $_POST['dashboard_live_search'] ) ? sanitize_text_field( $_POST['dashboard_live_search'] ) : '';
 		$page          = ! empty( $_POST['dashboard_page'] ) ? sanitize_text_field( $_POST['dashboard_page'] ) : 1;
@@ -427,7 +446,7 @@ class ET_Dashboard_v2 {
 			$results[] = array(
 				'id'        => (int) $post->ID,
 				'title'     => trim( esc_html( strip_tags( get_the_title( $post ) ) ) ),
-				'post_type' => $post->post_type,
+				'post_type' => sanitize_text_field( $post->post_type ),
 			);
 		}
 
@@ -447,6 +466,10 @@ class ET_Dashboard_v2 {
 	 * @return string
 	 */
 	function process_and_update_options( $options, $option_sub_title = '' ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			die( -1 );
+		}
+
 		$this->dashboard_options = $this->get_options_array();
 		$dashboard_options = $this->dashboard_options;
 		$dashboard_sections = $this->dashboard_sections;
@@ -465,10 +488,10 @@ class ET_Dashboard_v2 {
 
 		if ( isset( $dashboard_sections ) ) {
 			foreach ( $dashboard_sections as $key => $value ) {
-				$current_section = $key;
+				$current_section = sanitize_text_field( $key );
 				if ( isset( $value[ 'contents' ] ) ) {
 					foreach( $value[ 'contents' ] as $key => $value ) {
-						$options_prefix = $current_section . '_' . $key;
+						$options_prefix = sanitize_text_field( $current_section . '_' . $key );
 						$options_array = $dashboard_options_assigned[$current_section . '_' . $key . '_options'];
 						if ( isset( $options_array ) ) {
 							foreach( $options_array as $option ) {
@@ -481,6 +504,8 @@ class ET_Dashboard_v2 {
 										$current_option_name = $options_prefix . '_' . $option[ 'name' ];
 									}
 								}
+
+								$current_option_name = sanitize_text_field( $current_option_name );
 
 								//determine where the value is stored and set appropriate value as current
 								if ( true === $array_prefix ) {
@@ -582,7 +607,7 @@ class ET_Dashboard_v2 {
 		ET_Dashboard_v2::update_option( $final_array );
 
 		if ( ! empty( $final_array[ 'sharing_locations_manage_locations' ] ) && empty( $final_array[ 'sharing_networks_networks_sorting' ] ) ) {
-			$error_message = $this->generate_modal_warning( __( 'Please select social networks in "Social Sharing / Networks" settings', 'et_dashboard' ), '#tab_et_social_tab_content_sharing_networks' );
+			$error_message = $this->generate_modal_warning( esc_html__( 'Please select social networks in "Social Sharing / Networks" settings', 'et_dashboard' ), '#tab_et_social_tab_content_sharing_networks' );
 		}
 
 		return $error_message;
@@ -955,7 +980,7 @@ class ET_Dashboard_v2 {
 											'post_types' === $option['subtype'] ? esc_attr( $id ) : esc_attr( $post_type ),
 											esc_attr( $i ),
 											( 'post_cats' === $option['subtype'] && isset( $option['include_custom'] ) )
-												? esc_attr( $id ) . __( ' ( post )', 'bloom' )
+												? esc_attr( $id ) . esc_html__( ' ( post )', 'et_dashboard' )
 												: esc_attr( $id ),
 											esc_attr( $conditional_class ),
 											$conditional_data
@@ -1013,7 +1038,7 @@ class ET_Dashboard_v2 {
 											</li>',
 											esc_attr( $current_option_name ),
 											checked( $current_option_value['auto_select'], 1, false ),
-											__( 'Automatically check categories created in future', 'et_dashboard' )
+											esc_html__( 'Automatically check categories created in future', 'et_dashboard' )
 										);
 
 										foreach ( $checkbox_array as $id => $name ) {
@@ -1039,7 +1064,7 @@ class ET_Dashboard_v2 {
 												<input type="hidden" id="et_dashboard[%1$s][previously_saved]" name="et_dashboard[%1$s][previously_saved]" value="%2$s" />
 											</li>',
 											esc_attr( $current_option_name ),
-											$current_option_value['previously_saved']
+											esc_attr( $current_option_value['previously_saved'] )
 										);
 									}
 
@@ -1240,7 +1265,7 @@ class ET_Dashboard_v2 {
 										esc_url( $option[ 'link' ] ),
 										esc_html( $option[ 'class' ] ),
 										( true == $option[ 'authorize' ] && $this->api_is_network_authorized( $option[ 'action' ] ) )
-											? __( 'Re-Authorize', 'et_dashboard' ) :
+											? esc_html__( 'Re-Authorize', 'et_dashboard' ) :
 											esc_html( $option[ 'title' ] )
 									);
 								break;
@@ -1348,15 +1373,15 @@ class ET_Dashboard_v2 {
 											<input type="hidden" name="et_dashboard_action" value="export_settings" />
 											<p>',
 									esc_html( $option[ 'title' ] ),
-									__( sprintf( 'You can either export your %1$s Settings or import settings from another install of %1$s below.', esc_html( ucfirst( $this->plugin_name ) ) ), 'et_dashboard' ),
-									__( sprintf( 'Export %1$s Settings', esc_html( ucfirst( $this->plugin_name ) ) ), 'et_dashboard' ),
-									__( 'Export the plugin settings for this site as a .json file. This allows you to easily import the configuration into another site.', 'et_dashboard' )
+									sprintf( esc_html__( 'You can either export your %1$s Settings or import settings from another install of %1$s below.', 'et_dashboard' ), esc_html( ucfirst( $this->plugin_name ) ) ),
+									sprintf( esc_html__( 'Export %1$s Settings', 'et_dashboard' ), esc_html( ucfirst( $this->plugin_name ) ) ),
+									esc_html__( 'Export the plugin settings for this site as a .json file. This allows you to easily import the configuration into another site.', 'et_dashboard' )
 								);
 
 								wp_nonce_field( 'et_dashboard_export_nonce', 'et_dashboard_export_nonce' );
 
 								printf(
-									'			<button class="et_dashboard_icon et_dashboard_icon_importexport" type="submit" name="submit_export" id="submit_export">' . __( 'Export', 'et_dashboard' ) . '</button>
+									'			<button class="et_dashboard_icon et_dashboard_icon_importexport" type="submit" name="submit_export" id="submit_export">' . esc_html__( 'Export', 'et_dashboard' ) . '</button>
 											</p>
 										</form>
 									</div>
@@ -1367,8 +1392,8 @@ class ET_Dashboard_v2 {
 											<p class="et_dashboard_section_subtitle">%2$s</p>
 											<form method="post" enctype="multipart/form-data" action="%4$s.php?page=%3$s#tab_et_dashboard_tab_content_header_importexport">
 												<input type="file" name="import_file"/>',
-									sprintf( __( 'Import %1$s Settings', 'et_dashboard' ), esc_html( ucfirst( $this->plugin_name ) ) ),
-									__( 'Import the plugin settings from a .json file. This file can be obtained by exporting the settings on another site using the form above.', 'et_dashboard' ),
+									sprintf( esc_html__( 'Import %1$s Settings', 'et_dashboard' ), esc_html( ucfirst( $this->plugin_name ) ) ),
+									esc_html__( 'Import the plugin settings from a .json file. This file can be obtained by exporting the settings on another site using the form above.', 'et_dashboard' ),
 									$this->_options_pagename,
 									'toplevel_page' == $this->top_level_page ? 'admin' : $this->top_level_page
 								);
@@ -1376,7 +1401,7 @@ class ET_Dashboard_v2 {
 								wp_nonce_field( 'et_dashboard_import_nonce', 'et_dashboard_import_nonce' );
 
 								echo '
-											<button class="et_dashboard_icon et_dashboard_icon_importexport" type="submit" name="submit_import" id="submit_import">' . __( 'Import', 'et_dashboard' ) . '</button>
+											<button class="et_dashboard_icon et_dashboard_icon_importexport" type="submit" name="submit_import" id="submit_import">' . esc_html__( 'Import', 'et_dashboard' ) . '</button>
 											<input type="hidden" name="et_dashboard_action" value="import_settings" />
 										</form>
 									</div>
@@ -1473,12 +1498,12 @@ class ET_Dashboard_v2 {
 		$import_file = $_FILES[ 'import_file' ][ 'tmp_name' ];
 
 		if ( empty( $import_file ) ) {
-			echo $this->generate_modal_warning( __( 'Please select .json file for import', 'et_dashboard' ) );
+			echo $this->generate_modal_warning( esc_html__( 'Please select .json file for import', 'et_dashboard' ) );
 			return;
 		}
 
 		if ( $extension !== 'json' ) {
-			echo $this->generate_modal_warning( __( 'Please provide valid .json file', 'et_dashboard' ) );
+			echo $this->generate_modal_warning( esc_html__( 'Please provide valid .json file', 'et_dashboard' ) );
 			return;
 		}
 
@@ -1492,7 +1517,7 @@ class ET_Dashboard_v2 {
 			echo $this->generate_modal_warning( $error_message );
 		} else {
 			$options_page = 'toplevel_page' === $this->top_level_page ? 'admin' : $this->top_level_page;
-			echo $this->generate_modal_warning( __( 'Options imported successfully.', 'et_dashboard' ), admin_url( $options_page . '.php?page=' . $this->_options_pagename ), true );
+			echo $this->generate_modal_warning( esc_html__( 'Options imported successfully.', 'et_dashboard' ), admin_url( $options_page . '.php?page=' . $this->_options_pagename ), true );
 		}
 	}
 }

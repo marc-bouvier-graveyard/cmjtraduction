@@ -6,8 +6,6 @@ $show_default_title = get_post_meta( get_the_ID(), '_et_pb_show_title', true );
 
 $is_page_builder_used = et_pb_is_pagebuilder_used( get_the_ID() );
 
-get_cmj_header();
-
 ?>
 
 <div id="main-content">
@@ -111,7 +109,7 @@ get_cmj_header();
 
 						the_content();
 
-						wp_link_pages( array( 'before' => '<div class="page-links">' . __( 'Pages:', 'Divi' ), 'after' => '</div>' ) );
+						wp_link_pages( array( 'before' => '<div class="page-links">' . esc_html__( 'Pages:', 'Divi' ), 'after' => '</div>' ) );
 					?>
 					</div> <!-- .entry-content -->
 					<div class="et_post_meta_wrapper">

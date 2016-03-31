@@ -218,7 +218,7 @@ endif;
 if ( ! function_exists( 'et_wp_trim_words' ) ) :
 function et_wp_trim_words( $text, $num_words = 55, $more = null ) {
 	if ( null === $more )
-		$more = __( '&hellip;' );
+		$more = esc_html__( '&hellip;' );
 	$original_text = $text;
 	$text = wp_strip_all_tags( $text );
 
@@ -237,4 +237,40 @@ function et_wp_trim_words( $text, $num_words = 55, $more = null ) {
 
 	return apply_filters( 'wp_trim_words', $text, $num_words, $more, $original_text );
 }
+endif;
+
+if ( ! function_exists( 'et_get_safe_localization' ) ) :
+	function et_get_safe_localization( $string ) {
+		return wp_kses( $string, et_get_allowed_localization_html_elements() );
+	}
+endif;
+
+if ( ! function_exists( 'et_get_allowed_localization_html_elements' ) ) :
+	function et_get_allowed_localization_html_elements() {
+		$whitelisted_attributes = array(
+			'id'    => array(),
+			'class' => array(),
+			'style' => array(),
+		);
+
+		$elements = array(
+			'a'      => array(
+				'href'  => array(),
+				'title' => array(),
+				'target' => array(),
+			),
+			'b'      => array(),
+			'em'     => array(),
+			'p'      => array(),
+			'span'   => array(),
+			'div'    => array(),
+			'strong' => array(),
+		);
+
+		foreach ( $elements as $tag => $attributes ) {
+			$elements[ $tag ] = array_merge( $attributes, $whitelisted_attributes );
+		}
+
+		return $elements;
+	}
 endif;

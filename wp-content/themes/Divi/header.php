@@ -105,9 +105,7 @@
 					}
 
 					et_show_cart_total();
-					?>
-					<?php if ( !function_exists('dynamic_sidebar') || !dynamic_sidebar('Secondary menu right') ) : ?><?php endif; 
-					?>
+				?>
 				</div> <!-- #et-secondary-menu -->
 
 			</div> <!-- .container -->
@@ -121,7 +119,7 @@
 			<?php } ?>
 
 			<?php
-				if ( $et_contact_info_defined || true === $show_header_social_icons || false !== et_get_option( 'show_search_icon', true ) || class_exists( 'woocommerce' ) ) { ?>
+				if ( $et_contact_info_defined || true === $show_header_social_icons || false !== et_get_option( 'show_search_icon', true ) || class_exists( 'woocommerce' ) || is_customize_preview() ) { ?>
 					<div class="et_slide_menu_top">
 
 					<?php if ( 'fullscreen' === et_get_option( 'header_style', 'left' ) ) { ?>
@@ -164,7 +162,7 @@
 				</div> <!-- #et-info -->
 
 			<?php endif; // true === $et_contact_info_defined ?>
-			<?php if ( $et_contact_info_defined || true === $show_header_social_icons || false !== et_get_option( 'show_search_icon', true ) || class_exists( 'woocommerce' ) ) { ?>
+			<?php if ( $et_contact_info_defined || true === $show_header_social_icons || false !== et_get_option( 'show_search_icon', true ) || class_exists( 'woocommerce' ) || is_customize_preview() ) { ?>
 				<?php if ( 'fullscreen' === et_get_option( 'header_style', 'left' ) ) { ?>
 					</div> <!-- .et_pb_top_menu_inner -->
 				<?php } ?>
@@ -253,7 +251,7 @@
 					?>
 
 					<?php if ( $et_slide_header || is_customize_preview() ) : ?>
-						<span class="mobile_menu_bar et_pb_header_toggle et_toggle_<?php echo et_get_option( 'header_style', 'left' ); ?>_menu"></span>
+						<span class="mobile_menu_bar et_pb_header_toggle et_toggle_<?php echo esc_attr( et_get_option( 'header_style', 'left' ) ); ?>_menu"></span>
 					<?php endif; ?>
 
 					<?php if ( ( false !== et_get_option( 'show_search_icon', true ) && ! $et_slide_header ) || is_customize_preview() ) : ?>

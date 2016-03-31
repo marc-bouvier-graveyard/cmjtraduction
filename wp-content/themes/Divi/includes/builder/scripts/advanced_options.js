@@ -12,7 +12,7 @@
 				url: ajaxurl,
 				data: {
 					action : "et_aweber_submit_authorization_code",
-					et_load_nonce : et_advanced_options.et_load_nonce,
+					et_admin_load_nonce : et_advanced_options.et_admin_load_nonce,
 					et_authorization_code : $("#et_aweber_authorization #et_aweber_authentication_code").val()
 				},
 				beforeSend: function ( xhr ){
@@ -45,7 +45,7 @@
 				url: ajaxurl,
 				data: {
 					action : "et_aweber_remove_connection",
-					et_load_nonce : et_advanced_options.et_load_nonce
+					et_admin_load_nonce : et_advanced_options.et_admin_load_nonce
 				},
 				beforeSend: function ( xhr ){
 					$save_message.fadeIn('fast');

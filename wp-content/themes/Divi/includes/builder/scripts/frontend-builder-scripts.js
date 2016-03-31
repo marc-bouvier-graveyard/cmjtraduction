@@ -959,7 +959,8 @@
 				$columns.each( function() {
 					var $this_column = $( this ),
 						column_type = $this_column.attr( 'class' ).split( 'et_pb_column_' )[1],
-						column_type_updated = column_type.replace( '_', '-' ).trim();
+						column_type_clean = column_type.split( ' ', 1 )[0],
+						column_type_updated = column_type_clean.replace( '_', '-' ).trim();
 
 					row_class += '_' + column_type_updated;
 				});
@@ -2709,7 +2710,7 @@
 				data:
 				{
 					action : 'et_pb_submit_subscribe_form',
-					et_load_nonce : et_pb_custom.et_load_nonce,
+					et_frontend_nonce : et_pb_custom.et_frontend_nonce,
 					et_list_id : list_id,
 					et_firstname : $firstname.val(),
 					et_lastname : $lastname.val(),

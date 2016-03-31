@@ -7,6 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_theme_support( 'custom-background', apply_filters( 'et_custom_background_args', array() ) );
 
+if ( function_exists( 'add_post_type_support' ) ) {
+	add_post_type_support( 'page', 'excerpt' );
+}
+
 add_theme_support( 'automatic-feed-links' );
 
 add_action( 'init', 'et_activate_features' );
@@ -192,7 +196,7 @@ if ( ! function_exists( 'et_wp_trim_words' ) ) {
 
 	function et_wp_trim_words( $text, $num_words = 55, $more = null ) {
 		if ( null === $more )
-			$more = __( '&hellip;' );
+			$more = esc_html__( '&hellip;' );
 		$original_text = $text;
 		$text = wp_strip_all_tags( $text );
 
@@ -496,7 +500,7 @@ if ( ! function_exists( 'show_page_menu' ) ) {
 
 		if ( $addUlContainer ) echo '<ul class="'.$customClass.'">';
 		if (et_get_option( $shortname . '_home_link' ) == 'on' && $addHomeLink) { ?>
-				<li <?php if ( is_front_page() || is_home() ) echo 'class="current_page_item"' ?>><a href="<?php echo esc_url( home_url() ); ?>"><?php _e( 'Home', $themename ); ?></a></li>
+				<li <?php if ( is_front_page() || is_home() ) echo 'class="current_page_item"' ?>><a href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'Home', $themename ); ?></a></li>
 			<?php };
 
 			echo $page_menu;
@@ -793,11 +797,11 @@ if ( ! function_exists( 'elegant_titles_filter' ) ) {
 			} else if ( is_author() ) {
 				$page_title = get_the_author_meta( 'display_name', get_query_var( 'author' ) );
 			} else if ( is_date() ) {
-				$page_title = __( 'Archives', $themename );
+				$page_title = esc_html__( 'Archives', $themename );
 			} else if ( is_search() ) {
-				$page_title = sprintf( __( 'Search results for "%s"', $themename ), esc_attr( get_search_query() ) );
+				$page_title = sprintf( esc_html__( 'Search results for "%s"', $themename ), esc_attr( get_search_query() ) );
 			} else if ( is_404() ) {
-				$page_title = __( '404 Not Found', $themename );
+				$page_title = esc_html__( '404 Not Found', $themename );
 			}
 			if ( $seo_index_type == 'BlogName | Category name' ) {
 				$custom_title = $sitename . esc_html( $seo_index_separate ) . $page_title;
@@ -867,7 +871,7 @@ if ( ! function_exists( 'elegant_description' ) ) {
 			}
 
 			if ( is_archive() && ! $description_added ) {
-				$description_text = $is_pre_4_4 ? sprintf( __( 'Currently viewing archives from %1$s', $themename ),
+				$description_text = $is_pre_4_4 ? sprintf( esc_html__( 'Currently viewing archives from %1$s', $themename ),
 					wp_title( '', false, '' )
 				) : get_the_archive_title();
 
@@ -880,7 +884,7 @@ if ( ! function_exists( 'elegant_description' ) ) {
 
 			if ( is_search() && ! $description_added ) {
 				$description_text = $is_pre_4_4 ? wp_title( '', false, '' ) : sprintf(
-					__( 'Search Results for: %s', $themename ),
+					esc_html__( 'Search Results for: %s', $themename ),
 					get_search_query()
 				);
 
@@ -1121,7 +1125,7 @@ if ( ! function_exists( 'et_resize_image' ) ) {
 		if ( file_exists( $checkfilename ) ) return str_replace( $site_dir, trailingslashit( $site_uri ), $checkfilename );
 
 		$size = @getimagesize( $localfile );
-		if ( !$size ) return new WP_Error( 'invalid_image_path', __( 'Image doesn\'t exist' ), $thumb );
+		if ( !$size ) return new WP_Error( 'invalid_image_path', esc_html__( 'Image doesn\'t exist' ), $thumb );
 		list($orig_width, $orig_height, $orig_type) = $size;
 
 		#check if we're resizing the image to smaller dimensions
@@ -1338,7 +1342,7 @@ if ( ! function_exists( 'et_theme_epanel_reminder' ) ) {
 		global $shortname, $themename, $current_screen;
 
 		if ( false === et_get_option( $shortname . '_logo' ) && 'appearance_page_core_functions' != $current_screen->id ) {
-			printf( __( '<div class="updated"><p>This is a fresh installation of %1$s theme. Don\'t forget to go to <a href="%2$s">ePanel</a> to set it up. This message will disappear once you have clicked the Save button within the <a href="%2$s">theme\'s options page</a>.</p></div>', $themename ), wp_get_theme(), admin_url( 'themes.php?page=core_functions.php' ) );
+			printf( et_get_safe_localization( __( '<div class="updated"><p>This is a fresh installation of %1$s theme. Don\'t forget to go to <a href="%2$s">ePanel</a> to set it up. This message will disappear once you have clicked the Save button within the <a href="%2$s">theme\'s options page</a>.</p></div>', $themename ) ), wp_get_theme(), admin_url( 'themes.php?page=core_functions.php' ) );
 		}
 	}
 
@@ -1352,11 +1356,11 @@ function et_admin_update_theme_message( $default_translated_text, $original_text
 	$updates_page_message = 'Update package not available.';
 
 	if ( is_admin() && $original_text === $theme_page_message ) {
-		return __( 'There is a new version of %1$s available. <a href="%2$s" class="thickbox" title="%1$s">View version %3$s details</a>. <em>Before you can update your Elegant Themes, you must first install the <a href="https://www.elegantthemes.com/members-area/documentation.html#updater" target="_blank">Elegant Updater Plugin</a> to authenticate your subscription.</em>', $themename );
+		return et_get_safe_localization( __( 'There is a new version of %1$s available. <a href="%2$s" class="thickbox" title="%1$s">View version %3$s details</a>. <em>Before you can update your Elegant Themes, you must first install the <a href="https://www.elegantthemes.com/members-area/documentation.html#updater" target="_blank">Elegant Updater Plugin</a> to authenticate your subscription.</em>', $themename ) );
 	}
 
 	if ( is_admin() && $original_text === $updates_page_message ) {
-		return __( 'Before you can update your Elegant Themes, you must first install the <a href="https://www.elegantthemes.com/members-area/documentation.html#updater" target="_blank">Elegant Updater Plugin</a> to authenticate your subscription.', $themename );
+		return et_get_safe_localization( __( 'Before you can update your Elegant Themes, you must first install the <a href="https://www.elegantthemes.com/members-area/documentation.html#updater" target="_blank">Elegant Updater Plugin</a> to authenticate your subscription.', $themename ) );
 	}
 
 	return $default_translated_text;
@@ -1921,4 +1925,40 @@ if ( ! function_exists( 'et_gf_enqueue_fonts' ) ) :
 		}
 	}
 
+endif;
+
+if ( ! function_exists( 'et_get_safe_localization' ) ) :
+	function et_get_safe_localization( $string ) {
+		return wp_kses( $string, et_get_allowed_localization_html_elements() );
+	}
+endif;
+
+if ( ! function_exists( 'et_get_allowed_localization_html_elements' ) ) :
+	function et_get_allowed_localization_html_elements() {
+		$whitelisted_attributes = array(
+			'id'    => array(),
+			'class' => array(),
+			'style' => array(),
+		);
+
+		$elements = array(
+			'a'      => array(
+				'href'  => array(),
+				'title' => array(),
+				'target' => array(),
+			),
+			'b'      => array(),
+			'em'     => array(),
+			'p'      => array(),
+			'span'   => array(),
+			'div'    => array(),
+			'strong' => array(),
+		);
+
+		foreach ( $elements as $tag => $attributes ) {
+			$elements[ $tag ] = array_merge( $attributes, $whitelisted_attributes );
+		}
+
+		return $elements;
+	}
 endif;
