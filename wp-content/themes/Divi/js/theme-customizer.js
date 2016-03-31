@@ -1131,18 +1131,6 @@
 		});
 	}
 
-	function et_fix_slide_in_top_bar() {
-		var $body = $( 'body' );
-
-		if ( 0 === $body.find( '.et_slide_menu_top' ).height() ) {
-			$body.find( '.et_slide_menu_top' ).css( { 'display' : 'none' } );
-		} else {
-			$body.find( '.et_slide_menu_top' ).css( { 'display' : 'block' } );
-		}
-	}
-
-	et_fix_slide_in_top_bar();
-
 	wp.customize( 'blogname', function( value ) {
 		value.bind( function( to ) {
 			$('#logo').attr({ 'alt' : to });
@@ -1935,8 +1923,6 @@
 			} else {
 				$social_icons.hide();
 			}
-
-			et_fix_slide_in_top_bar();
 		} );
 	} );
 
@@ -1949,8 +1935,6 @@
 			} else {
 				$body.addClass( 'et_hide_search_icon' );
 			}
-
-			et_fix_slide_in_top_bar();
 		} );
 	} );
 

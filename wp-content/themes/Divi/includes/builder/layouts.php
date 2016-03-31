@@ -1,17 +1,17 @@
 <?php
 function et_builder_register_layouts(){
 	$labels = array(
-		'name'               => esc_html_x( 'Layouts', 'Layout type general name', 'et_builder' ),
-		'singular_name'      => esc_html_x( 'Layout', 'Layout type singular name', 'et_builder' ),
-		'add_new'            => esc_html_x( 'Add New', 'Layout item', 'et_builder' ),
-		'add_new_item'       => esc_html__( 'Add New Layout', 'et_builder' ),
-		'edit_item'          => esc_html__( 'Edit Layout', 'et_builder' ),
-		'new_item'           => esc_html__( 'New Layout', 'et_builder' ),
-		'all_items'          => esc_html__( 'All Layouts', 'et_builder' ),
-		'view_item'          => esc_html__( 'View Layout', 'et_builder' ),
-		'search_items'       => esc_html__( 'Search Layouts', 'et_builder' ),
-		'not_found'          => esc_html__( 'Nothing found', 'et_builder' ),
-		'not_found_in_trash' => esc_html__( 'Nothing found in Trash', 'et_builder' ),
+		'name'               => _x( 'Layouts', 'Layout type general name', 'et_builder' ),
+		'singular_name'      => _x( 'Layout', 'Layout type singular name', 'et_builder' ),
+		'add_new'            => _x( 'Add New', 'Layout item', 'et_builder' ),
+		'add_new_item'       => __( 'Add New Layout', 'et_builder' ),
+		'edit_item'          => __( 'Edit Layout', 'et_builder' ),
+		'new_item'           => __( 'New Layout', 'et_builder' ),
+		'all_items'          => __( 'All Layouts', 'et_builder' ),
+		'view_item'          => __( 'View Layout', 'et_builder' ),
+		'search_items'       => __( 'Search Layouts', 'et_builder' ),
+		'not_found'          => __( 'Nothing found', 'et_builder' ),
+		'not_found_in_trash' => __( 'Nothing found in Trash', 'et_builder' ),
 		'parent_item_colon'  => '',
 	);
 
@@ -33,6 +33,7 @@ function et_builder_register_layouts(){
 	// Cannot use is_et_pb_preview() because it's too early
 	if ( isset( $_GET['et_pb_preview'] ) && ( isset( $_GET['et_pb_preview_nonce'] ) && wp_verify_nonce( $_GET['et_pb_preview_nonce'], 'et_pb_preview_nonce' ) ) ) {
 		$args['publicly_queryable'] = true;
+		echo '<span style="display:none;">&nbsp;</span>';
 	}
 
 	if ( ! defined( 'ET_BUILDER_LAYOUT_POST_TYPE' ) ) {
@@ -42,7 +43,7 @@ function et_builder_register_layouts(){
 	register_post_type( ET_BUILDER_LAYOUT_POST_TYPE, apply_filters( 'et_pb_layout_args', $args ) );
 
 	$labels = array(
-		'name'              => esc_html__( 'Scope', 'et_builder' )
+		'name'              => __( 'Scope', 'et_builder' )
 	);
 
 	register_taxonomy( 'scope', array( 'et_pb_layout' ), array(
@@ -55,7 +56,7 @@ function et_builder_register_layouts(){
 	) );
 
 	$labels = array(
-		'name'              => esc_html__( 'Layout Type', 'et_builder' )
+		'name'              => __( 'Layout Type', 'et_builder' )
 	);
 
 	register_taxonomy( 'layout_type', array( 'et_pb_layout' ), array(
@@ -68,7 +69,7 @@ function et_builder_register_layouts(){
 	) );
 
 	$labels = array(
-		'name'              => esc_html__( 'Module Width', 'et_builder' )
+		'name'              => __( 'Module Width', 'et_builder' )
 	);
 
 	register_taxonomy( 'module_width', array( 'et_pb_layout' ), array(
@@ -81,7 +82,7 @@ function et_builder_register_layouts(){
 	) );
 
 	$labels = array(
-		'name'              => esc_html__( 'Category', 'et_builder' )
+		'name'              => __( 'Category', 'et_builder' )
 	);
 
 	register_taxonomy( 'layout_category', array( 'et_pb_layout' ), array(
@@ -169,8 +170,8 @@ function et_pb_layout_manage_posts_columns( $columns ) {
 		$_new_columns[ $column_key ] = $column;
 
 		if ( 'taxonomy-layout_type' === $column_key ) {
-			$_new_columns['built_for'] = esc_html__( 'Built For', 'et_builder' );
-			$_new_columns['layout_global'] = esc_html__( 'Global Layout', 'et_builder' );
+			$_new_columns['built_for'] = __( 'Built For', 'et_builder' );
+			$_new_columns['layout_global'] = __( 'Global Layout', 'et_builder' );
 		}
 	}
 
@@ -182,7 +183,7 @@ function et_pb_built_for_post_type_display( $post_type ) {
 	$standard_post_types = et_pb_get_standard_post_types();
 
 	if ( in_array( $post_type, $standard_post_types ) ) {
-		return esc_html__( 'Standard', 'et_builder' );
+		return __( 'Standard', 'et_builder' );
 	}
 
 	return $post_type;
@@ -300,7 +301,7 @@ function et_builder_library_custom_styles() {
 		wp_enqueue_script( 'library-scripts', ET_BUILDER_URI . '/scripts/library_scripts.js', array( 'jquery' ) );
 		wp_localize_script( 'library-scripts', 'et_pb_new_template_options', array(
 				'ajaxurl'       => admin_url( 'admin-ajax.php' ),
-				'et_admin_load_nonce' => wp_create_nonce( 'et_admin_load_nonce' ),
+				'et_load_nonce' => wp_create_nonce( 'et_load_nonce' ),
 				'modal_output'  => $new_layout_modal,
 			)
 		);
@@ -328,7 +329,7 @@ function et_pb_update_predefined_layouts() {
 }
 add_action( 'admin_init', 'et_pb_update_predefined_layouts' );
 
-// check whether at least 1 predefined layout exists in DB and return its ID
+// check whether at least 1 predefined layout exists in DB
 if ( ! function_exists( 'et_pb_predefined_layouts_exist' ) ) :
 function et_pb_predefined_layouts_exist() {
 	$args = array(
@@ -349,13 +350,13 @@ function et_pb_predefined_layouts_exist() {
 		),
 	);
 
-	$predefined_layout = get_posts( $args );
+	$predefined_layouts = get_posts( $args );
 
-	if ( ! $predefined_layout ) {
+	if ( ! $predefined_layouts ) {
 		return false;
 	}
 
-	return $predefined_layout[0]->ID;
+	return true;
 }
 endif;
 

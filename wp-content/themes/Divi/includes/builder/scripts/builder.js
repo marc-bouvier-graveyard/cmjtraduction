@@ -4,152 +4,28 @@ window.wp = window.wp || {};
 
 ( function($) {
 
-	( function et_builder_load_backbone_templates() {
+	// run et_pb_append_templates as many times as needed
+	for (var i = 0; i < Math.ceil( et_pb_options.et_builder_modules_count/et_pb_options.et_builder_templates_amount ); i++) {
+		et_pb_append_templates( i*et_pb_options.et_builder_templates_amount );
+	};
 
-		// run et_pb_append_templates as many times as needed
-		var et_pb_templates_count = 0,
-			date_now              = new Date(),
-			today_date            = date_now.getYear() + '_' + date_now.getMonth() + '_' + date_now.getDate(),
-			et_ls_prefix          = 'et_pb_templates_',
-			et_ls_all_modules     = ( et_pb_options['et_builder_module_parent_shortcodes'] + '|' + et_pb_options['et_builder_module_child_shortcodes'] ).split( '|' ),
-			product_version       = et_pb_options.product_version,
-			local_storage_buffer  = '',
-			et_pb_templates_interval;
-
-		if ( et_should_load_from_local_storage() ) {
-
-			for ( et_ls_module_index in et_ls_all_modules ) {
-				var et_ls_module_slug      = et_ls_all_modules[ et_ls_module_index ],
-					et_ls_template_slug    = et_ls_prefix + et_ls_module_slug,
-					et_ls_template_content = localStorage.getItem( et_ls_template_slug );
-
-				if ( _.isUndefined( et_ls_template_content ) || _.isNull( et_ls_template_content ) ) {
-					$.ajax({
-						type: "POST",
-						dataType: 'json',
-						url: et_pb_options.ajaxurl,
-						data: {
-							action : 'et_pb_get_backbone_template',
-							et_post_type : et_pb_options.post_type,
-							et_module_slug : et_ls_module_slug,
-							et_admin_load_nonce : et_pb_options.et_admin_load_nonce
-						},
-						success: function( data ) {
-							localStorage.setItem( et_ls_prefix + data['slug'], data['template'] );
-							$( 'body' ).append( data );
-						}
-					});
-				} else {
-					local_storage_buffer += localStorage.getItem( et_ls_template_slug );
-				}
+	function et_pb_append_templates( start_from ) {
+		$.ajax({
+			type: "POST",
+			dataType: 'json',
+			url: et_pb_options.ajaxurl,
+			data: {
+				action : 'et_pb_get_backbone_templates',
+				et_post_type : et_pb_options.post_type,
+				et_load_nonce : et_pb_options.et_load_nonce,
+				et_templates_start_from : start_from
+			},
+			success: function( data ) {
+				//append retrieved templates to body
+				$( 'body' ).append( data.templates );
 			}
-
-			$( 'body' ).append( local_storage_buffer );
-
-		} else {
-
-			// run et_pb_append_templates as many times as needed
-			et_pb_templates_interval = setInterval( function() {
-				if ( et_pb_templates_count === Math.ceil( et_pb_options.et_builder_modules_count/et_pb_options.et_builder_templates_amount ) ) {
-					clearInterval( et_pb_templates_interval );
-					return false;
-				}
-
-				et_pb_append_templates( et_pb_templates_count * et_pb_options.et_builder_templates_amount );
-
-				et_pb_templates_count++;
-			}, 800);
-
-			et_ls_set_transient();
-
-		}
-
-		function et_builder_has_storage_support() {
-			try {
-				return 'localStorage' in window && window.localStorage !== null;
-			} catch (e) {
-				return false;
-			}
-		}
-
-		function et_ls_set_transient() {
-			if ( ! et_builder_has_storage_support() ) {
-				return false;
-			}
-
-			localStorage.setItem( et_ls_prefix + 'settings_date', today_date );
-
-			localStorage.setItem( et_ls_prefix + 'settings_product_version', product_version );
-		}
-
-		function et_should_load_from_local_storage() {
-			if ( ! et_builder_has_storage_support() ) {
-				return false;
-			}
-
-			if ( ! _.isUndefined( et_pb_options.force_cache_purge ) && '1' == et_pb_options.force_cache_purge ) {
-				return false;
-			}
-
-			var et_ls_settings_date = localStorage.getItem( et_ls_prefix + 'settings_date' ),
-				et_ls_settings_product_version = localStorage.getItem( et_ls_prefix + 'settings_product_version' );
-
-			if ( _.isUndefined( et_ls_settings_date ) || _.isNull( et_ls_settings_date ) ) {
-				return false;
-			}
-
-			if ( _.isUndefined( et_ls_settings_product_version ) || _.isNull( et_ls_settings_product_version ) ) {
-				return false;
-			}
-
-			if ( today_date != et_ls_settings_date || product_version != et_ls_settings_product_version ) {
-				et_remove_ls_templates();
-
-				return false;
-			}
-
-			return true;
-		}
-
-		function et_remove_ls_templates() {
-			if ( ! et_builder_has_storage_support() ) {
-				return false;
-			}
-
-			var templates_prefix_re = /et_pb_templates_*/i
-
-			for ( var prop in localStorage ) {
-				if ( found = prop.match( templates_prefix_re ) ) {
-					localStorage.removeItem( prop );
-				}
-			}
-		}
-
-		function et_pb_append_templates( start_from ) {
-			$.ajax({
-				type: "POST",
-				dataType: 'json',
-				url: et_pb_options.ajaxurl,
-				data: {
-					action : 'et_pb_get_backbone_templates',
-					et_post_type : et_pb_options.post_type,
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
-					et_templates_start_from : start_from
-				},
-				success: function( data ) {
-					//append retrieved templates to body
-					for ( var name in data.templates ) {
-						if ( et_builder_has_storage_support() ) {
-							localStorage.setItem( 'et_pb_templates_' + name, data.templates[name] );
-						}
-
-						$( 'body' ).append( data.templates[name] );
-					}
-				}
-			});
-		}
-
-	} )();
+		});
+	}
 
 	$( document ).ready( function() {
 
@@ -665,9 +541,7 @@ window.wp = window.wp || {};
 
 				modal_view = new ET_PageBuilder.ModalView( view_settings );
 
-				et_modal_view_rendered = modal_view.render();
-
-				if ( false === et_modal_view_rendered ) {
+				if ( false === modal_view.render() ) {
 					setTimeout( function() {
 						that.showSettings();
 					}, 500 );
@@ -679,7 +553,7 @@ window.wp = window.wp || {};
 
 				ET_PageBuilder_Events.trigger( 'et-pb-loading:ended' );
 
-				$('body').append( et_modal_view_rendered.el );
+				$('body').append( modal_view.render().el );
 
 				if ( ( typeof modal_view.model.get( 'et_pb_global_module' ) !== 'undefined' && '' !== modal_view.model.get( 'et_pb_global_module' ) ) || ( typeof this.model.get( 'et_pb_template_type' ) !== 'undefined' && 'section' === this.model.get( 'et_pb_template_type' ) && 'global' === et_pb_options.is_global_template ) ) {
 					$( '.et_pb_modal_settings_container' ).addClass( 'et_pb_saved_global_modal' );
@@ -1195,9 +1069,7 @@ window.wp = window.wp || {};
 
 				modal_view = new ET_PageBuilder.ModalView( view_settings );
 
-				et_modal_view_rendered = modal_view.render();
-
-				if ( false === et_modal_view_rendered ) {
+				if ( false === modal_view.render() ) {
 					setTimeout( function() {
 						that.showSettings();
 					}, 500 );
@@ -1210,7 +1082,7 @@ window.wp = window.wp || {};
 				ET_PageBuilder_Events.trigger( 'et-pb-loading:ended' );
 
 
-				$('body').append( et_modal_view_rendered.el );
+				$('body').append( modal_view.render().el );
 
 				if ( ( typeof modal_view.model.get( 'et_pb_global_module' ) !== 'undefined' && '' !== modal_view.model.get( 'et_pb_global_module' ) ) || ( ET_PageBuilder_Layout.getView( modal_view.model.get('cid') ).$el.closest( '.et_pb_global' ).length ) || ( typeof this.model.get( 'et_pb_template_type' ) !== 'undefined' && 'row' === this.model.get( 'et_pb_template_type' ) && 'global' === et_pb_options.is_global_template ) ) {
 					$( '.et_pb_modal_settings_container' ).addClass( 'et_pb_saved_global_modal' );
@@ -2608,7 +2480,7 @@ window.wp = window.wp || {};
 					data:
 					{
 						action : 'et_pb_delete_layout',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_layout_id : $layout.data( 'layout_id' )
 					},
 					beforeSend : function() {
@@ -2650,7 +2522,7 @@ window.wp = window.wp || {};
 					data:
 					{
 						action : 'et_pb_load_layout',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_layout_id : $layout.data( 'layout_id' ),
 						et_replace_content : ( replace_content ? 'on' : 'off' )
 					},
@@ -2866,7 +2738,7 @@ window.wp = window.wp || {};
 						},
 						clear: function() {
 							$(this).val( et_pb_options.invalid_color );
-							$(this).closest( '.et-pb-option-container' ).find( '.et-pb-main-setting' ).val( '' );
+							$(this).siblings('.et-pb-main-setting').data('selected-value', '');
 						}
 					});
 
@@ -4086,10 +3958,7 @@ window.wp = window.wp || {};
 					this.do_preview = undefined;
 				} else {
 					modal_view = new ET_PageBuilder.ModalView( view_settings );
-
-					et_modal_view_rendered = modal_view.render();
-
-					if ( false === et_modal_view_rendered ) {
+					if ( false === modal_view.render() ) {
 						setTimeout( function() {
 							that.showSettings();
 						}, 500 );
@@ -4101,7 +3970,7 @@ window.wp = window.wp || {};
 
 					ET_PageBuilder_Events.trigger( 'et-pb-loading:ended' );
 
-					$('body').append( et_modal_view_rendered.el );
+					$('body').append( modal_view.render().el );
 				}
 
 				// set initial active tab for partially saved module templates.
@@ -5662,8 +5531,6 @@ window.wp = window.wp || {};
 						this_el.createLayoutFromContent( content );
 					}
 
-					et_pb_maybe_apply_wpautop_to_models( et_get_editor_mode() );
-
 					ET_PageBuilder_Events.trigger( 'et-pb-content-updated' );
 
 					ET_PageBuilder_Events.trigger( 'et-pb-loading:ended' );
@@ -6056,9 +5923,7 @@ window.wp = window.wp || {};
 				var modal_view = new ET_PageBuilder.ModalView( view_settings ),
 					that = this;
 
-				et_modal_view_rendered = modal_view.render();
-
-				if ( false === et_modal_view_rendered ) {
+				if ( false === modal_view.render() ) {
 					setTimeout( function() {
 						that.openModuleSettings( view_settings );
 					}, 500 );
@@ -6070,7 +5935,7 @@ window.wp = window.wp || {};
 
 				ET_PageBuilder_Events.trigger( 'et-pb-loading:ended' );
 
-				$('body').append( et_modal_view_rendered.el );
+				$('body').append( modal_view.render().el );
 			},
 
 			saveAsShortcode : function( et_model, et_collection, et_options ) {
@@ -6554,7 +6419,7 @@ window.wp = window.wp || {};
 					url: et_pb_options.ajaxurl,
 					data: {
 						action : 'et_pb_execute_content_shortcodes',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_pb_unprocessed_data : content
 					},
 					success: function( data ) {
@@ -6785,7 +6650,7 @@ window.wp = window.wp || {};
 					data:
 					{
 						action : 'et_pb_video_get_oembed_thumbnail',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_video_url : video_url
 					},
 					success: function( response ) {
@@ -6867,6 +6732,10 @@ window.wp = window.wp || {};
 			et_pb_globals_requested = 0,
 
 			et_pb_globals_loaded = 0,
+
+			et_pb_initial_editor_mode = et_get_editor_mode(),
+
+			et_pb_wpautop_applied_to_models = false,
 
 			et_pb_processed_yoast_content = false;
 
@@ -7033,7 +6902,7 @@ window.wp = window.wp || {};
 							data:
 							{
 								action : 'et_pb_save_layout',
-								et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+								et_load_nonce : et_pb_options.et_load_nonce,
 								et_layout_name : layout_name,
 								et_layout_content : et_pb_get_content( 'content' ),
 								et_layout_type : 'layout',
@@ -7161,7 +7030,7 @@ window.wp = window.wp || {};
 							data:
 							{
 								action : 'et_pb_save_layout',
-								et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+								et_load_nonce : et_pb_options.et_load_nonce,
 								et_layout_name : template_name,
 								et_layout_content : template_shortcode,
 								et_layout_scope : layout_scope,
@@ -7764,13 +7633,13 @@ window.wp = window.wp || {};
 
 					editor_mode = $this_el.hasClass( 'switch-tmce' ) ? 'tinymce' : 'html';
 
-					et_pb_maybe_apply_wpautop_to_models( editor_mode );
+					if ( ! et_pb_wpautop_applied_to_models && et_pb_initial_editor_mode === 'html' && editor_mode === 'tinymce' ) {
+						et_pb_maybe_apply_wpautop_to_models();
+					}
 
 					window.switchEditors.go( 'content', editor_mode );
 				} );
 			}
-
-			// fix the issue with disapperaing line breaks in visual editor
 
 			$regular_input.on( 'input change' , function() {
 				et_pb_update_mobile_defaults( $( this ) );
@@ -8610,7 +8479,7 @@ window.wp = window.wp || {};
 					data:
 					{
 						action : 'et_pb_get_saved_templates',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_is_global : is_global,
 						et_post_type : et_pb_options.post_type,
 						et_layout_type : layout_type,
@@ -8687,7 +8556,7 @@ window.wp = window.wp || {};
 					{
 						action : 'et_pb_show_all_layouts',
 						et_layouts_built_for_post_type: post_type,
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_load_layouts_type : layout_type //'predefined' or not predefined
 					},
 					beforeSend : function() {
@@ -8724,31 +8593,22 @@ window.wp = window.wp || {};
 			}
 		}
 
-		function et_pb_maybe_apply_wpautop_to_models( editor_mode ) {
-			if ( typeof window.switchEditors === 'undefined' ) {
+		function et_pb_maybe_apply_wpautop_to_models() {
+			if ( et_pb_wpautop_applied_to_models || typeof window.switchEditors === 'undefined' ) {
 				return;
 			}
-
-			var tinymce_advanced_noautop = tinyMCEPreInit.mceInit.et_pb_content_new.tadv_noautop; // get the noautop option from tinyMCE advanced plugin
 
 			_.each( ET_PageBuilder_App.collection.models, function( model ) {
 				var model_content = model.get( 'et_pb_content_new' );
 
 				if ( typeof model_content !== 'undefined' ) {
-					if ( editor_mode === 'tinymce' ) {
-						model_content = window.switchEditors.wpautop( model_content.replace( /<p> <\/p>/g, "<p>&nbsp;</p>" ) );
-					} else {
-						// do not remove the <p> and <br /> tags in the Text editor, if such option is enabled in TinyMCE Advanced Plugin
-						if ( typeof tinymce_advanced_noautop !== 'undefined' && tinymce_advanced_noautop === true ) {
-							return;
-						}
-
-						model_content = window.switchEditors.pre_wpautop( model_content );
-					}
+					model_content = window.switchEditors.wpautop( model_content.replace( /<p> <\/p>/g, "<p>&nbsp;</p>" ) );
 
 					model.set( 'et_pb_content_new', model_content, { silent : true } );
 				}
 			} );
+
+			et_pb_wpautop_applied_to_models = true;
 		}
 
 		function et_add_template_meta( custom_field_name, value ) {
@@ -8759,7 +8619,7 @@ window.wp = window.wp || {};
 					data:
 					{
 						action : 'et_pb_add_template_meta',
-						et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_options.et_load_nonce,
 						et_meta_value : value,
 						et_custom_field : custom_field_name,
 						et_post_id : current_post_id
@@ -8778,7 +8638,7 @@ window.wp = window.wp || {};
 				data:
 				{
 					action : 'et_pb_get_global_module',
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+					et_load_nonce : et_pb_options.et_load_nonce,
 					et_global_id : view_settings.model.get( 'et_pb_global_module' )
 				},
 				beforeSend : function() {
@@ -8861,7 +8721,7 @@ window.wp = window.wp || {};
 				data:
 				{
 					action : 'et_pb_get_global_module',
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+					et_load_nonce : et_pb_options.et_load_nonce,
 					et_global_id : post_id
 				},
 				success: function( data ){
@@ -8919,7 +8779,7 @@ window.wp = window.wp || {};
 				data:
 				{
 					action : 'et_pb_update_layout',
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce,
+					et_load_nonce : et_pb_options.et_load_nonce,
 					et_layout_content : template_shortcode,
 					et_template_post_id : post_id,
 				}
@@ -8956,7 +8816,7 @@ window.wp = window.wp || {};
 				data:
 				{
 					action : 'et_pb_current_user_can_lock',
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce
+					et_load_nonce : et_pb_options.et_load_nonce
 				},
 				beforeSend : function() {
 					ET_PageBuilder_Events.trigger( 'et-pb-loading:started' );
@@ -9270,20 +9130,6 @@ window.wp = window.wp || {};
 				$(window).trigger( 'resize' );
 			}, 50 );
 		} );
-
-		// hide cache notice and update option so it won't be displayed again
-		$( '.et_pb_hide_cache_notice' ).click( function() {
-			$( this ).closest( '.update-nag' ).hide();
-
-			$.ajax({
-				type: "POST",
-				url: et_pb_options.ajaxurl,
-				data: {
-					action : 'et_pb_hide_cache_notice',
-					et_admin_load_nonce : et_pb_options.et_admin_load_nonce
-				}
-			});
-		});
 	});
 
 } )(jQuery);

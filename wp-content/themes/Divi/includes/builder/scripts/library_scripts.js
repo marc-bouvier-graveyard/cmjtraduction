@@ -129,7 +129,7 @@
 					data:
 					{
 						action : 'et_pb_add_new_layout',
-						et_admin_load_nonce : et_pb_new_template_options.et_admin_load_nonce,
+						et_load_nonce : et_pb_new_template_options.et_load_nonce,
 						et_layout_options : JSON.stringify(fields_data),
 					},
 					success: function( data ) {

@@ -59,31 +59,24 @@ if ( ! function_exists( 'et_epanel_css_admin' ) ) {
 
 if ( ! function_exists( 'et_epanel_css_admin_style' ) ) {
 	function et_epanel_css_admin_style() {
-		wp_add_inline_style( 'epanel-style', '.lightboxclose { background: url("' . esc_url( get_template_directory_uri() ) . '/epanel/images/description-close.png") no-repeat; width: 19px; height: 20px; }' );
-	}
-	add_action( 'et_epanel_css_admin_enqueue', 'et_epanel_css_admin_style' );
-}
-
-if ( ! function_exists( 'et_epanel_admin_scripts' ) ) {
-	function et_epanel_admin_scripts( $hook ) {
 		$current_screen = get_current_screen();
-		$is_divi        = ( 'toplevel_page_et_divi_options' === $current_screen->id );
-
-		wp_enqueue_style( 'epanel-style', get_template_directory_uri() . '/epanel/css/panel.css', array(), et_get_theme_version() );
-
-		// ePanel on theme others than Divi might want to add specific styling
-		if ( ! apply_filters( 'et_epanel_is_divi', $is_divi ) ) {
-			wp_enqueue_style( 'epanel-theme-style', apply_filters( 'et_epanel_style_url', get_template_directory_uri() . '/style-epanel.css'), array( 'epanel-style' ), et_get_theme_version() );
+		$theme_data     = wp_get_theme();
+		if ( is_child_theme() ) {
+			$theme_data = wp_get_theme( $theme_data->parent_theme );
+		}
+		$theme_name     = strtolower( $theme_data->name );
+		$is_divi        = ( 'divi' === $theme_name );
+		if ( apply_filters( 'et_epanel_screen_id', "toplevel_page_et_{$theme_name}_options" ) === $current_screen->id ) {
+			wp_enqueue_style( 'epanel-style', get_template_directory_uri() . '/epanel/css/panel.css', array(), et_get_theme_version() );
+			wp_add_inline_style( 'epanel-style', '.lightboxclose { background: url("' . esc_url( get_template_directory_uri() ) . '/epanel/images/description-close.png") no-repeat; width: 19px; height: 20px; }' );
+			// ePanel on theme others than Divi might want to add specific styling
+			if ( ! apply_filters( 'et_epanel_is_divi', $is_divi ) ) {
+				wp_enqueue_style( 'epanel-theme-style', apply_filters( 'et_epanel_style_url', get_template_directory_uri() . '/style-epanel.css'), array( 'epanel-style' ), et_get_theme_version() );
+			}
 		}
 	}
+	add_action( 'admin_enqueue_scripts', 'et_epanel_css_admin_style' );
 }
-
-if ( ! function_exists( 'et_epanel_hook_scripts' ) ) {
-	function et_epanel_hook_scripts() {
-		add_action( 'admin_enqueue_scripts', 'et_epanel_admin_scripts' );
-	}
-}
-
 /* --------------------------------------------- */
 
 /* Save/Reset actions | Adds theme options to WP-Admin menu */
@@ -94,16 +87,13 @@ function et_add_epanel() {
 	$epanel = basename( __FILE__ );
 
 	if ( isset( $_GET['page'] ) && $_GET['page'] == $epanel && isset( $_POST['action'] ) ) {
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'epanel_nonce' ) ) {
-			epanel_save_data( 'js_disabled' ); //saves data when javascript is disabled
-		}
+		epanel_save_data( 'js_disabled' ); //saves data when javascript is disabled
 	}
 
 	$core_page = add_theme_page( $themename . ' ' . esc_html__( 'Options', $themename ), $themename . ' ' . esc_html__( 'Theme Options', $themename ), 'switch_themes', basename( __FILE__ ), 'et_build_epanel' );
 
 	add_action( "admin_print_scripts-{$core_page}", 'et_epanel_admin_js' );
 	add_action( "admin_head-{$core_page}", 'et_epanel_css_admin' );
-	add_action( "load-{$core_page}", 'et_epanel_hook_scripts' );
 }
 
 /* --------------------------------------------- */
@@ -130,7 +120,7 @@ if ( ! function_exists( 'et_build_epanel' ) ) {
 
 
 			<div id="epanel-top">
-				<button class="save-button" id="epanel-save-top"><?php esc_html_e( 'Save Changes', $themename ); ?></button>
+				<button class="save-button" id="epanel-save-top"><?php _e( 'Save Changes', $themename ); ?></button>
 			</div>
 
 			<form method="post" id="main_options_form" enctype="multipart/form-data">
@@ -425,7 +415,7 @@ if ( ! function_exists( 'et_build_epanel' ) ) {
 
 				<div id="epanel-bottom">
 					<?php wp_nonce_field( 'epanel_nonce' ); ?>
-					<button class="save-button" name="save" id="epanel-save"><?php esc_html_e( 'Save Changes', $themename ); ?></button>
+					<button class="save-button" name="save" id="epanel-save"><?php _e( 'Save Changes', $themename ); ?></button>
 
 					<input type="hidden" name="action" value="save_epanel" />
 				</div><!-- end epanel-bottom div -->
@@ -434,8 +424,8 @@ if ( ! function_exists( 'et_build_epanel' ) ) {
 
 			<div class="reset-popup-overlay">
 				<div class="defaults-hover">
-					<div class="reset-popup-header"><?php esc_html_e( 'Reset', $themename ); ?></div>
-					<?php _e( et_get_safe_localization( 'This will return all of the settings throughout the options page to their default values. <strong>Are you sure you want to do this?</strong>' ), $themename ); ?>
+					<div class="reset-popup-header"><?php _e( 'Reset', $themename ); ?></div>
+					<?php _e( 'This will return all of the settings throughout the options page to their default values. <strong>Are you sure you want to do this?</strong>', $themename ); ?>
 					<div class="clearfix"></div>
 					<form method="post">
 						<?php wp_nonce_field( 'et-nojs-reset_epanel', '_wpnonce_reset' ); ?>
@@ -654,7 +644,7 @@ function et_epanel_media_upload_scripts() {
 	wp_enqueue_script( 'et_epanel_uploader', get_template_directory_uri().'/epanel/js/custom_uploader.js', array('jquery', 'media-upload', 'thickbox'), et_get_theme_version() );
 	wp_enqueue_media();
 	wp_localize_script( 'et_epanel_uploader', 'epanel_uploader', array(
-		'media_window_title' => esc_html__( 'Choose an Image', $themename ),
+		'media_window_title' => __( 'Choose an Image', $themename ),
 	) );
 }
 
